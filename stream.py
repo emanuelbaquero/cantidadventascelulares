@@ -3,225 +3,179 @@ import pandas as pd
 import numpy as np
 #import unidecode as uni
 #import Util as utl
-from sklearn.cross_validation import cross_val_score
-from sklearn import metrics
-from sklearn import linear_model
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
+#from sklearn.cross_validation import cross_val_score
+#from sklearn import metrics
+#from sklearn import linear_model
+#from sklearn.model_selection import train_test_split
+#import matplotlib.pyplot as plt
 import pickle
 
 
-def nuevosDatos (p_modeloMatriz, superficie_total, jardin, terraza, ambientes, tipo, barrio):
 
-                            
-    modeloMatriz = p_modeloMatriz
-
-    ##SUPERFICIE TOTAL
-    df0 = pd.DataFrame({'superficie_total':pd.Series(superficie_total)})
-
-    ##BARRIOS
-    barrios = pd.Series(modeloMatriz.iloc[:,7:].columns)
-    barrios = (barrios.str.replace('_',' '))
-    df1 = barrios.apply(lambda x: 1 if x==barrio else 0)
-    df2 = pd.DataFrame(columns=barrios)
-    df2 = df2.append({ 'flores' : 0 } , ignore_index=True)
-    df2 = df2.fillna(0).astype(int)
-    df2.iloc[:,barrios[barrios.str.contains(barrio+'$',regex=True)].index] = '1'
+def crear_dummis_modelos(modelo, precio):
+    df = pd.DataFrame({'moto':pd.Series('moto'), 'samsung':pd.Series('samsung'),'tcl':pd.Series('tcl'),'xiaomi':pd.Series('xiaomi'),'iphone':pd.Series('iphone'),'lg':pd.Series('lg'),'sony':pd.Series('sony'),'nokia':pd.Series('nokia'),'blackberry':pd.Series('blackberry'),'huawei':pd.Series('huawei'),'otros':pd.Series('otros')})
+    df0 = pd.DataFrame({'precio':pd.Series(precio)})
+    df = df.applymap(lambda x: 1 if x==modelo else 0)
+    df2 = pd.concat([df0,df],axis=1)
+    return df2
 
 
-    ##AMBIENTES Y TIPOS
 
-
+def regresion_logistica(p_data, v_target=True):
+    # DEPENDENCIAS
+    import pandas as pd
+    import numpy as np
+    from sklearn.model_selection import train_test_split
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import confusion_matrix
+    import unidecode as ud
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix,accuracy_score
+    import seaborn as sns
+    from sklearn.metrics import roc_auc_score
+    from matplotlib import pyplot as plt
     
-    if jardin=='1':
-        var_jardin = 'jardin'
-    else:
-        var_jardin = ''
-    if terraza=='1':
-        var_terraza = 'terraza'
-    else:
-        var_terraza = ''
-    if (jardin == '1') & (terraza == '1'):
-        var_jardinTerraza = 'jardinTerraza'
-    else:
-        var_jardinTerraza = ''
-
+    data = p_data
     
-    df4 = pd.DataFrame({'jardin':pd.Series(0),'jardinTerraza':pd.Series(0),'CASA':pd.Series(0),'PH':pd.Series(0),'DTO':pd.Series(0)})
-    indices = df4.columns
-    indices = pd.Series(indices).astype(str)
-    indices_bool = (indices.apply(lambda x: x=='CASA')) | (indices.apply(lambda x: x==var_jardin)) | (indices.apply(lambda x: x==var_terraza)) | (indices.apply(lambda x: x==var_jardinTerraza))  
-    serie_df4 = indices_bool.apply(lambda x : 1 if x else 0)
-
-    df4_proc = pd.DataFrame({
-
-    'jardin':pd.Series(serie_df4[0]), 
-    'jardinTerraza':pd.Series(serie_df4[1]),
-    'CASA':pd.Series(serie_df4[2]),
-    'PH':pd.Series(serie_df4[3]),
-    'DTO':pd.Series(serie_df4[4])
-    })
-
+    if v_target:
+        data_aux = data[data.ventas==0].sample(200)# BALANCEAR LA CANTIDAD DE VENTAS = "0"
+        data = data[data.ventas!=0]
+        data =  pd.concat([data,data_aux],axis=0)
+        data.ventas = data.ventas.apply(lambda x: 0 if (x<=1) else 1 if ((x>1)&(x<=5)) else 2)
+    else:
+        data.ventas = pd.qcut(data.ventas,2,labels=[0,1])
     
-    predecir_data = pd.concat([df0,df4_proc],axis=1)
-    predecir_data = pd.concat([predecir_data, df2],axis=1)
-    #predecir_data.superficie_total_2 = predecir_data.superficie_total**2
+    
+    data.precio = pd.qcut(data.precio,5,labels=[0,1,2,3,4])
+    X = pd.DataFrame({'precio':data.precio,'moto':data.moto,'samsung':data.samsung,'tcl':data.tcl,'xiaomi':data.xiaomi,'iphone':data.iphone,'lg':data.lg,'sony':data.sony,'nokia':data.nokia,'huawei':data.huawei,'blackberry':data.blackberry,'otros':data.otros})
+    y = data.ventas
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=50)
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    modelo = LogisticRegression(C=1e10)
+    modelo.fit(X_train,y_train)
+    X_test = scaler.transform(X_test)
+    y_predict = modelo.predict(X_test)
 
-    return predecir_data
+    y_test = np.array(y_test)
+    y_predict = np.array(y_predict)
 
-
-### PICKLE
-
-with open('modelo.pkl', 'rb') as f_math:
-    modelos = pickle.load(f_math)
-
-modeloMatriz = modelos['modeloMatriz']
-modelo_multiple = modelos['multiple']
-modelo_ridge = modelos['ridge']
-modelo_lasso = modelos['lasso']
-
-
-
-
-st.write(
-      '<h1 class="titulo">Calcular Precio M2</h1>',
-      unsafe_allow_html=True
-  )
-#st.title('')
-
-st.write(
-      '<h3 class="titulo_secundario">en Capital Federal</h1>',
-      unsafe_allow_html=True
-  )
-
-
-st.markdown('<style>h1.titulo{color:black;padding-top:-4%;margin-botton:0;}.titulo:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
-
-st.markdown('<style>h3.titulo_secundario{color:#9f9f9f;padding:0;}.titulo:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
-
-
-
-st.markdown('<style>.reportview-container .main .block-container{border-radius:0%;padding:2%;margin:0%;background:#fff8f8;text-align:center;opacity:.95;}</style>', unsafe_allow_html=True)
-
-
-st.markdown('<style>.block-container{text-align:center;}</style>', unsafe_allow_html=True)
-
-
-#st.markdown('<style>html{padding:5%;background:#eeeeee;}</style>', unsafe_allow_html=True)
-
-st.write(
-      '<h3 class="sup_total">Ingrese la Superficie Total...</h3>',
-      unsafe_allow_html=True
-  )
-
-st.markdown('<style>h3.sup_total{margin:0;padding:0;} .sup_total{color:#9f9f9f;}.sup_total:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
-
-
-var_superficie = st.text_input('')
-
-
-if st.checkbox('Jardin'):
-	JARDIN = '1'   
-else:
-	JARDIN = '0'   
-
-
-if st.checkbox('Terraza' ):
-	TERRAZA = '1'
-else:
-	TERRAZA = '0'
-
-
-st.markdown('<style>.st-bp.st-c3.st-ai.st-ae.st-af.st-ag.st-c4{color:#9f9f9f;}.st-ai{color:#9f9f9f}</style>', unsafe_allow_html=True)
-
-
-
-#.st-bb {
-#    -webkit-box-align: start;
-#    align-items: flex-start;
-#}
-
-df = pd.DataFrame({
-  'Propiedad': ['Casa', 'Departamento', 'PH'],
-  'second column': [10, 20, 30]
-})
-
-
-diccionar_tipos = {'Casa':'CASA','Departamento':'DTO','PH':'PH'}
-
-
-st.write(
-      '<h3 class="tipo_propiedad">Seleccione el Tipo de Propiedad...</h3>',
-      unsafe_allow_html=True
-  )
-
-
-st.markdown('<style>h3.tipo_propiedad{margin:-3%;padding:0;} .tipo_propiedad{color:#9f9f9f}.tipo_propiedad:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
-
-
-
-var_tipo = st.selectbox(
-    '',
-     df['Propiedad'])
-
-
-#st.title(diccionar_tipos[var_tipo])
-
-
-df = pd.DataFrame({
-  'barrios': ['mataderos', 'liniers', 'belgrano', 'palermo soho', 'palermo',
-       'flores', 'boedo', 'las canitas', 'puerto madero', 'balvanera',
-       'caballito', 'nunez', 'san telmo', 'almagro', 'capital federal',
-       'colegiales', 'barrio norte', 'barracas', 'recoleta',
-       'villa crespo', 'constitucion', 'villa urquiza',
-       'palermo hollywood', 'saavedra', 'pompeya', 'parque chas',
-       'paternal', 'agronomia', 'villa pueyrredon', 'coghlan',
-       'parque centenario', 'monserrat', 'palermo chico', 'floresta',
-       'villa luro', 'villa devoto', 'boca', 'parque avellaneda',
-       'san cristobal', 'velez sarsfield', 'abasto', 'versalles',
-       'villa del parque', 'monte castro', 'retiro', 'parque patricios',
-       'san nicolas', 'villa santa rita', 'chacarita', 'congreso',
-       'centro / microcentro', 'once', 'tribunales', 'parque chacabuco',
-       'catalinas', 'villa general mitre', 'palermo viejo',
-       'villa lugano', 'villa ortuzar', 'villa soldati', 'villa real',
-       'villa riachuelo']
-})
-
-
-diccionar_tipos = {'Casa':'CASA','Departamento':'DTO','PH':'PH'}
-
-
-
-st.write(
-      '<h3 class="barrio">Seleccione el barrio...</h3>',
-      unsafe_allow_html=True
-  )
+    if y.value_counts().shape[0] == 2:
+        print('ROC_AUC_SCORE: ',roc_auc_score(y_test, y_predict))
+    print(' ')
+    print(classification_report(y_test,y_predict))
+    print('')
+    print(confusion_matrix(y_test,y_predict))
+    mat = confusion_matrix(y_test, y_predict)
+    sns.heatmap(mat, square=True, annot=True, fmt='d')
+    plt.xlabel('Etiquetas predichas')
+    plt.ylabel('Etiquetas verdaderas')
+        
+    return {'modelo':modelo,'scaler':scaler}
 
 
 
 
-st.markdown('<style>.barrio{color:#9f9f9f;}.barrio:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
+
+def naive_bayes(p_df, predecir=[], v_target=3):
+    #DEPENDENCIAS
+    from sklearn.metrics import roc_auc_score
+    from sklearn.metrics import roc_auc_score, classification_report, confusion_matrix,accuracy_score 
+    from sklearn.naive_bayes import MultinomialNB
+    import numpy as np
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import accuracy_score
+    from sklearn.metrics import confusion_matrix
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    scaler = StandardScaler()
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    import unidecode as ud
+    
+    df = p_df
+    
+    if v_target==3:
+        df_aux = df[df.ventas==0].sample(190)
+        df = df[df.ventas!=0]
+        df =  pd.concat([df,df_aux],axis=0)
+        df.ventas = df.ventas.apply(lambda x: 0 if (x<=1) else 1 if ((x>1)&(x<=5)) else 2)
+        df.ventas.value_counts()
+    else:
+        df.ventas = pd.qcut(df.ventas,2,labels=[0,1])
+        
+    X = pd.DataFrame({'titulo':df.titulo})
+    X = X.titulo.apply(lambda x : ud.unidecode(x).lower())
+    y = df.ventas
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=50)
+    modelo_tfidf = TfidfVectorizer(ngram_range=(2,3), max_df=0.65)
+    X_train = modelo_tfidf.fit_transform(X_train)
+    y_train = np.array(y_train)
+    if v_target==3:
+        modelo_NB = MultinomialNB(alpha=0.001,class_prior=[.75,.99,.80])
+    else:
+        modelo_NB = MultinomialNB(alpha=0.001,class_prior=[.60,.30])
+    modelo_NB.fit(X_train, y_train)
+    X_test = modelo_tfidf.transform(X_test)
+    X_test.get_shape()
+    predicciones = modelo_NB.predict(X_test)
+    predicciones_proba = modelo_NB.predict_proba(X_test)
+    accuracy = accuracy_score(y_test, predicciones)
+    #print('ROC_AUC_SCORE: ',roc_auc_score(y_test, predicciones))
+    print(' ')
+    print(classification_report(y_test,predicciones))
+    print('')
+    print(confusion_matrix(y_test,predicciones))
+    mat = confusion_matrix(y_test, predicciones)
+    sns.heatmap(mat, square=True, annot=True, fmt='d')
+    plt.xlabel('Etiquetas predichas')
+    plt.ylabel('Etiquetas verdaderas')
+    salida = []
+    if pd.Series(predecir).shape[0] != 0:
+        for i in predecir:
+            nuevos_X = pd.Series(i)
+            nuevos_X = modelo_tfidf.transform(nuevos_X)
+            if v_target==3:
+                dic = {0:'pocas',1:'medias',2:'altas'}
+            else:
+                dic = {0:'pocas',1:'muchas'}
+            pd.DataFrame(modelo_NB.predict_proba(nuevos_X))
+
+            if (modelo_NB.predict_proba(nuevos_X).max())>0.45:
+                print('')
+                print('Prediccion de ventas para '+i+': ',dic[modelo_NB.predict(nuevos_X)[0]])
+                print(modelo_NB.predict_proba(nuevos_X))
+                if v_target==3:
+                    salida_valor = modelo_NB.predict(nuevos_X)[0]
+                    bar_df = pd.DataFrame(modelo_NB.predict_proba(nuevos_X),columns=['bajas ventas','medias ventas','altas ventas'])
+                else:
+                    salida_valor = modelo_NB.predict(nuevos_X)[0]
+                    bar_df = pd.DataFrame(modelo_NB.predict_proba(nuevos_X),columns=['bajas ventas','altas ventas'])
+                    
+                salida.append((i,bar_df))
+            else:
+                salida_valor = -1
+                print('')
+                print('No se puede estimar correctamente')
+    else:
+        salida_valor = -2
+        salida='n/p'
+    return {'modeloPalabras':modelo_tfidf,'modelo':modelo_NB,'salida':salida,'salida_valor':salida_valor}
 
 
-st.markdown('<style>h3.barrio{padding-top:5%;padding-botton:0;margin:-5%}</style>', unsafe_allow_html=True)
 
 
-var_barrio = st.selectbox(
-    '',
-     df['barrios'])
 
 
-#st.title(var_superficie)
-#st.title(diccionar_tipos[var_tipo])
-#st.title(var_barrio)
 
+st.title('Clasificador de Ventas')
 
 
 dfm = pd.DataFrame({
-  'Modelos': ['Regresion Lineal Multiple', 'Regresion Ridge', 'Regresion Lasso'],
-  'second column': [10, 20, 30]
+  'Modelos': ['Regresion Logistica', 'Naive Bayes'],
+  'second column': [1, 2]
 })
- 
 
 
 st.write(
@@ -230,89 +184,125 @@ st.write(
 )
 
 
-st.markdown('<style>h3.tipo_propiedad{margin:-3%;padding:0;} .tipo_propiedad{color:#9f9f9f}.tipo_propiedad:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
-
-
-
-diccionar_modelos = {'Regresion Lineal Multiple':'M','Regresion Ridge':'R','Regresion Lasso':'L'}
-
-
 var_modelo = st.selectbox('   ',dfm['Modelos'])
 
-
-st.markdown('<style>h3.tipo_modelo{margin:0;padding:0;} .tipo_modelo{color:#9f9f9f}.tipo_modelo:hover{color:#ff5454;}</style>', unsafe_allow_html=True)
-
-
-
-st.markdown('<style>h3.tipo_modelo{margin:0;padding:0;padding-top:3%;}</style>', unsafe_allow_html=True)
+var_modelo = var_modelo[0]
 
 
 
 
-
-SUPERFICIE_TOTAL = var_superficie           
-CANTIDAD_DE_AMBIENTES = '1'       
-TIPO_DE_PROPIEDAD = diccionar_tipos[var_tipo]
-BARRIO = var_barrio
-
-
-st.title(diccionar_modelos[var_modelo])
-
- 
+if var_modelo == 'R':
+  st.write(
+      '<h1 class="c_precio">Predictor Regresion Logistica...</h3>',
+      unsafe_allow_html=True
+  ) 
 
 
-if st.button('Predecir Precio'):
-  if SUPERFICIE_TOTAL.isnumeric():
-    if int(SUPERFICIE_TOTAL)<2000 and int(SUPERFICIE_TOTAL)>0:
-      nuevos_Feactures = nuevosDatos(modeloMatriz, SUPERFICIE_TOTAL, JARDIN, TERRAZA, CANTIDAD_DE_AMBIENTES, TIPO_DE_PROPIEDAD, BARRIO)
-      if diccionar_modelos[var_modelo] == 'M':
-        y_predict = modelo_multiple.predict(nuevos_Feactures)
-        st.title('El precio por M2 es de U$D'+str(y_predict[0].round(-1).astype(int)))
-      if diccionar_modelos[var_modelo] == 'R':
-        y_predict = modelo_ridge.predict(nuevos_Feactures)
-        st.title('El precio por M2 es de U$D'+str(y_predict[0].round(-1).astype(int)))  
-      if diccionar_modelos[var_modelo] == 'L':
-        y_predict = modelo_lasso.predict(nuevos_Feactures)
-        st.title('El precio por M2 es de U$D'+str(y_predict[0].round(-1).astype(int))) 
+  st.write(
+      '<h3 class="c_precio">Ingrese el Precio...</h3>',
+      unsafe_allow_html=True
+  ) 
+
+
+  dfm_precios = pd.DataFrame({
+  'Precios': ['$9.999-$22999.0', '$22999.0-$45069.0','$45069.0-$78989.0','$78989.0-$154666.0','$154666.0-$449999.0'],
+  })
+
+  var_precios_celulares = st.selectbox('   ',dfm_precios['Precios'])
+
+  dic_precios={'$9.999-$22999.0':0,'$22999.0-$45069.0':1,'$45069.0-$78989.0':2,'$78989.0-$154666.0':3,'$154666.0-$449999.0':4}
+
+
+
+  st.write(
+      '<h3 class="c_precio">Seleccione el Modelo...</h3>',
+      unsafe_allow_html=True
+  ) 
+
+  dfm_celular = pd.DataFrame({
+  'Modelos': ['MOTO', 'SAMSUNG','IPHONE','LG','TCL','XIAOMI','SONY','NOKIA','BLACKBERRY','HUAWEI','OTROS'],
+  })
+
+  var_modelo_celular = st.selectbox('   ',dfm_celular['Modelos'])
+
+  
+  var_modelo_celular = var_modelo_celular.lower()
+
+
+
+  if st.button('Predecir Ventas'):
+    
+    nuevos_x = crear_dummis_modelos(var_modelo_celular,dic_precios[var_precios_celulares])
+
+
+    data = pd.read_csv('data_celulares_modelo.csv')
+    dic_modelo = regresion_logistica(data, v_target=False)
+    modelo = dic_modelo['modelo']
+    scaler = dic_modelo['scaler']
+    nuevos_x = scaler.transform(nuevos_x)
+        
+    predict = modelo.predict(nuevos_x)[0]
+
+    if predict == 0:
+      st.write(
+        '<h3 class="c_prediccion">El Modelo Estima Pocas Ventas...</h3>',
+          unsafe_allow_html=True
+      ) 
+      st.markdown('<style>h3.c_prediccion{color:red;font-size:2em;}</style>', unsafe_allow_html=True)
     else:
-      st.title('Superficie Total fuera de rango')
-      st.header('(0,2000)')
+      st.write(
+          '<h3 class="c_prediccion">El Modelo Estima Muchas Ventas...</h3>',
+          unsafe_allow_html=True
+      )
+      st.markdown('<style>h3.c_prediccion{color:blue;font-size:2em;}</style>', unsafe_allow_html=True) 
+
+
+
+
+
+else:
+  st.write(
+      '<h1 class="c_precio">Predictor Naive Bayes...</h3>',
+      unsafe_allow_html=True
+  ) 
+
+  st.write(
+    '<h3 class="c_precio">Ingrese caracteristicas del Celular...</h3>',
+    unsafe_allow_html=True
+  ) 
+
+
+  var_titulo = ''
+  var_titulo = st.text_input('')
+
+
+  if st.button('Predecir Ventas'):
+    df = pd.read_csv('data_celulares_modelo.csv').iloc[:,1:]
+
+    l_celulares=[var_titulo]
+
+    df_bar = naive_bayes(df,l_celulares,v_target=2)['salida_valor']
+
+    if df_bar == 0:
+        st.write(
+          '<h3 class="c_prediccion">El Modelo Estima Pocas Ventas...</h3>',
+          unsafe_allow_html=True
+        ) 
+
+        st.markdown('<style>h3.c_prediccion{color:red;font-size:2em;}</style>', unsafe_allow_html=True)
+
+    else:
+      st.write(
+          '<h3 class="c_prediccion">El Modelo Estima Muchas Ventas...</h3>',
+          unsafe_allow_html=True
+      )
+      st.markdown('<style>h3.c_prediccion{color:blue;font-size:2em;}</style>', unsafe_allow_html=True) 
 
 
   else:
-    st.title('Debe Ingresar un valor correcto de Superficie Total')
-
-
-st.markdown('<style>.st-dd{background:#ff5454;}button.st-ae{color:white;}</style>', unsafe_allow_html=True)
-
-  
-st.write(
-      '<footer><div class="div_git"><a href="https://github.com/dh-Grupo6/modelo-properatti"><img class="git" src="https://banner2.kisspng.com/20180326/kze/kisspng-github-computer-icons-github-5ab8a43c40d844.3335024615220501082656.jpg"></img></a></div></footer>',
-      unsafe_allow_html=True
-)
-
-
-st.markdown('<style>.git{width:4%;border-radius:85%;}.div_git{opacity:50%;position: absolute;bottom:-8em;left:-0.2%;}.div_git:hover{opacity:100%;}</style>', unsafe_allow_html=True)
-
-  
-
-
-st.markdown('<style>html{background: #F0F0F0}</style>', unsafe_allow_html=True)
-
-#st.markdown('<style>html{background-image: url("https://c0.wallpaperflare.com/preview/494/435/823/argentina-buenos-aires-obelisco-ba.jpg");background-repeat: no-repeat;background-size:cover;}</style>', unsafe_allow_html=True)
-
-
-  
+    
 
 
 
-st.title('')
-
-
-
-
-
-
-
-
-
+    st.markdown('<style>..st-b9{backgorund:black;}</style>', unsafe_allow_html=True) 
+    
