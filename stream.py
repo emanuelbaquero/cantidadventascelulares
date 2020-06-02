@@ -170,11 +170,11 @@ def naive_bayes(p_df, predecir=[], v_target=3):
 
 st.markdown('<style>body{background:yellow;}</style>', unsafe_allow_html=True) 
 
-st.markdown('<style>.st-b9{background:black;border-line:none;color:white;}</style>', unsafe_allow_html=True) 
-st.markdown('<style>.st-ag{color:black;}</style>', unsafe_allow_html=True) 
-st.markdown('<style>.st-dz{background:black;color:white;}</style>', unsafe_allow_html=True) 
-st.markdown('<style>.st-dk{background:white;color:white;}</style>', unsafe_allow_html=True) 
-st.markdown('<style>.st-e4{background:white;color:white;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>.st-b9{background:#FFFEDA;}</style>', unsafe_allow_html=True) 
+#st.markdown('<style>.st-ag{color:black;}</style>', unsafe_allow_html=True) 
+#st.markdown('<style>.st-dz{background:black;color:white;}</style>', unsafe_allow_html=True) 
+#st.markdown('<style>.st-dk{background:white;color:white;}</style>', unsafe_allow_html=True) 
+#st.markdown('<style>.st-e4{background:white;color:white;}</style>', unsafe_allow_html=True) 
 
 
 
