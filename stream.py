@@ -9,8 +9,9 @@ import numpy as np
 #from sklearn.model_selection import train_test_split
 #import matplotlib.pyplot as plt
 import pickle
+import matplotlib.pyplot as plt
 
-
+ 
 
 def crear_dummis_modelos(modelo, precio):
     df = pd.DataFrame({'moto':pd.Series('moto'), 'samsung':pd.Series('samsung'),'tcl':pd.Series('tcl'),'xiaomi':pd.Series('xiaomi'),'iphone':pd.Series('iphone'),'lg':pd.Series('lg'),'sony':pd.Series('sony'),'nokia':pd.Series('nokia'),'blackberry':pd.Series('blackberry'),'huawei':pd.Series('huawei'),'otros':pd.Series('otros')})
@@ -167,10 +168,27 @@ def naive_bayes(p_df, predecir=[], v_target=3):
 
 
 
+st.markdown('<style>body{background:yellow;}</style>', unsafe_allow_html=True) 
+
+st.markdown('<style>.st-b9{background:black;border-line:none;color:white;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>.st-ag{color:black;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>.st-dz{background:black;color:white;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>.st-dk{background:white;color:white;}</style>', unsafe_allow_html=True) 
 
 
-st.title('Clasificador de Ventas')
 
+st.write(
+      '<h1 class="titulo">CLASIFICADOR DE VENTAS</h1>',
+      unsafe_allow_html=True
+)
+
+st.write(
+      '<h3 class="subtitulo">Celulares en MercadoLibre</h3>',
+      unsafe_allow_html=True
+)
+
+st.markdown('<style>h3.titulo{margin-top:0;margin-botton:-5px;}</style>', unsafe_allow_html=True)
+st.markdown('<style>h3.subtitulo{margin-top:0;}</style>', unsafe_allow_html=True) 
 
 dfm = pd.DataFrame({
   'Modelos': ['Regresion Logistica', 'Naive Bayes'],
@@ -275,34 +293,40 @@ else:
   var_titulo = ''
   var_titulo = st.text_input('')
 
+  v_dimension = st.checkbox("Decision Binaria")
+
+  if v_dimension:
+    v_target=2
+  else:
+    v_target=3
 
   if st.button('Predecir Ventas'):
     df = pd.read_csv('data_celulares_modelo.csv').iloc[:,1:]
 
     l_celulares=[var_titulo]
+    df_bar = naive_bayes(df,l_celulares,v_target=v_target)['salida_valor']
 
-    df_bar = naive_bayes(df,l_celulares,v_target=2)['salida_valor']
+    
+    df = pd.read_csv('data_celulares_modelo.csv').iloc[:,1:]
+    l_celulares=[var_titulo]
+    
+    modelo = naive_bayes(df,l_celulares,v_target=v_target)
+    modeloBayes = modelo['modelo']
+    modeloPalabras = modelo['modeloPalabras']
 
-    if df_bar == 0:
-        st.write(
-          '<h3 class="c_prediccion">El Modelo Estima Pocas Ventas...</h3>',
-          unsafe_allow_html=True
-        ) 
-
-        st.markdown('<style>h3.c_prediccion{color:red;font-size:2em;}</style>', unsafe_allow_html=True)
-
+    var_titulo = modeloPalabras.transform(pd.Series(var_titulo))
+    predictproba = modeloBayes.predict_proba(var_titulo)
+    if v_dimension:
+      bar_df = pd.DataFrame(predictproba,columns=['bajas ventas','altas ventas'])
     else:
-      st.write(
-          '<h3 class="c_prediccion">El Modelo Estima Muchas Ventas...</h3>',
-          unsafe_allow_html=True
-      )
-      st.markdown('<style>h3.c_prediccion{color:blue;font-size:2em;}</style>', unsafe_allow_html=True) 
-
+      bar_df = pd.DataFrame(predictproba,columns=['bajas ventas','medias ventas', 'altas ventas'])
+    bar_df.plot.bar(rot=0)
+    st.pyplot()
 
   else:
+
+
+    st.title('')
     
-
-
-
-    st.markdown('<style>..st-b9{backgorund:black;}</style>', unsafe_allow_html=True) 
     
+   
