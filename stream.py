@@ -168,9 +168,10 @@ def naive_bayes(p_df, predecir=[], v_target=3):
 
 
 
-st.markdown('<style>body{background:yellow;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>body{:#FFF69E;}</style>', unsafe_allow_html=True) 
 
-st.markdown('<style>.st-b9{background:#FFFEDA;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>.st-b9{}</style>', unsafe_allow_html=True) 
+
 #st.markdown('<style>.st-ag{color:black;}</style>', unsafe_allow_html=True) 
 #st.markdown('<style>.st-dz{background:black;color:white;}</style>', unsafe_allow_html=True) 
 #st.markdown('<style>.st-dk{background:white;color:white;}</style>', unsafe_allow_html=True) 
@@ -179,14 +180,17 @@ st.markdown('<style>.st-b9{background:#FFFEDA;}</style>', unsafe_allow_html=True
 
 
 st.write(
-      '<h1 class="titulo">CLASIFICADOR DE VENTAS</h1>',
+      '<div class=bloque_titulo><h1 class="titulo">CLASIFICADOR DE VENTAS</h1><h3 class="subtitulo">Celulares en MercadoLibre</h3></div>',
       unsafe_allow_html=True
 )
 
-st.write(
-      '<h3 class="subtitulo">Celulares en MercadoLibre</h3>',
-      unsafe_allow_html=True
-)
+
+st.markdown('<style>div.bloque_titulo{padding:5%;text-align:center;border-radius:15%;}</style>', unsafe_allow_html=True)
+
+#st.write(
+#      '<h3 class="subtitulo">Celulares en MercadoLibre</h3>',
+#      unsafe_allow_html=True
+#)
 
 st.markdown('<style>h3.titulo{margin-top:0;margin-botton:-5px;}</style>', unsafe_allow_html=True)
 st.markdown('<style>h3.subtitulo{margin-top:0;}</style>', unsafe_allow_html=True) 
