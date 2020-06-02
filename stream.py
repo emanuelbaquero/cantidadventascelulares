@@ -174,6 +174,7 @@ st.markdown('<style>.st-b9{background:black;border-line:none;color:white;}</styl
 st.markdown('<style>.st-ag{color:black;}</style>', unsafe_allow_html=True) 
 st.markdown('<style>.st-dz{background:black;color:white;}</style>', unsafe_allow_html=True) 
 st.markdown('<style>.st-dk{background:white;color:white;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>.st-e4{background:white;color:white;}</style>', unsafe_allow_html=True) 
 
 
 
@@ -266,13 +267,13 @@ if var_modelo == 'R':
         '<h3 class="c_prediccion">El Modelo Estima Pocas Ventas...</h3>',
           unsafe_allow_html=True
       ) 
-      st.markdown('<style>h3.c_prediccion{color:red;font-size:2em;}</style>', unsafe_allow_html=True)
+      st.markdown('<style>h3.c_prediccion{color:white;font-size:2em;background:#F12424;padding:10%;}</style>', unsafe_allow_html=True)
     else:
       st.write(
           '<h3 class="c_prediccion">El Modelo Estima Muchas Ventas...</h3>',
           unsafe_allow_html=True
       )
-      st.markdown('<style>h3.c_prediccion{color:blue;font-size:2em;}</style>', unsafe_allow_html=True) 
+      st.markdown('<style>h3.c_prediccion{color:white;font-size:2em;background:#28E21B;padding:10%;}</style>', unsafe_allow_html=True) 
 
 
 
@@ -329,4 +330,3 @@ else:
     st.title('')
     
     
-   
