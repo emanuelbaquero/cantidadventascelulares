@@ -168,11 +168,11 @@ def naive_bayes(p_df, predecir=[], v_target=3):
 
 
 
-st.markdown('<style>body{:#FFF69E;}</style>', unsafe_allow_html=True) 
+st.markdown('<style>body{}</style>', unsafe_allow_html=True) 
 
 st.markdown('<style>.st-b9{}</style>', unsafe_allow_html=True) 
 
-#st.markdown('<style>.st-ag{color:black;}</style>', unsafe_allow_html=True) 
+
 #st.markdown('<style>.st-dz{background:black;color:white;}</style>', unsafe_allow_html=True) 
 #st.markdown('<style>.st-dk{background:white;color:white;}</style>', unsafe_allow_html=True) 
 #st.markdown('<style>.st-e4{background:white;color:white;}</style>', unsafe_allow_html=True) 
@@ -216,7 +216,7 @@ var_modelo = var_modelo[0]
 
 if var_modelo == 'R':
   st.write(
-      '<h1 class="c_precio">Predictor Regresion Logistica...</h3>',
+      '<h1 class="c_precio">Predecir con Regresion Logistica...</h3>',
       unsafe_allow_html=True
   ) 
 
@@ -272,6 +272,8 @@ if var_modelo == 'R':
           unsafe_allow_html=True
       ) 
       st.markdown('<style>h3.c_prediccion{color:white;font-size:2em;background:#F12424;padding:10%;}</style>', unsafe_allow_html=True)
+  
+
     else:
       st.write(
           '<h3 class="c_prediccion">El Modelo Estima Muchas Ventas...</h3>',
@@ -328,9 +330,10 @@ else:
     bar_df.plot.bar(rot=0)
     st.pyplot()
 
-  else:
 
 
-    st.title('')
-    
-    
+st.title('')
+st.write('<div class="github"><a href="https://github.com/emanuelbaquero/celulares-ml"><img src="https://img2.freepng.es/20180331/udw/kisspng-social-media-github-computer-icons-logo-github-5ac0188083c4f5.8572681115225386245397.jpg"><p class="cuenta de git"></p></a></div>', unsafe_allow_html=True)
+st.markdown('<style>div.github a{text-aling:center;}</style>',unsafe_allow_html=True)
+st.markdown('<style>div.github img{ width:10%;opacity:.2;padding:.5%;text-align:center;border-radius:50%;margin-left:47%;}</style>',unsafe_allow_html=True)
+st.markdown('<style>div.github img:hover{padding:.1%;opacity: 1;}</style>',unsafe_allow_html=True)
